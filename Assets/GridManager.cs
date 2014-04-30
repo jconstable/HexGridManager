@@ -151,7 +151,9 @@ public class GridManager : MonoBehaviour
                     newVisual.transform.localScale = new Vector3( _manager.GridSize, _manager.GridSize, 1f );
                     debugVisuals.Add( newVisual );
                 }
-                debugVisuals[ _debugTileCounter ].transform.position = new Vector3( vec.x * _manager.GridSize, 0.002f, vec.y * _manager.GridSize );
+                Vector3 pos = Vector3.zero;
+                _manager.GridToPosition( ref vec, ref pos );
+                debugVisuals[ _debugTileCounter ].transform.position = pos + (Vector3.up * 0.002f);
                 
                 _debugTileCounter++;
             }
@@ -267,7 +269,9 @@ public class GridManager : MonoBehaviour
                     {
                         GameObject o = Instantiate(vacantTilePrefab) as GameObject;
                         o.transform.forward = Vector3.down;
-                        o.transform.position = new Vector3(_tmpGrid.x * GridSize, 0.001f, _tmpGrid.y * GridSize);
+                        Vector3 pos = Vector3.zero;
+                        GridToPosition( ref _tmpGrid, ref pos );
+                        o.transform.position = pos + ( Vector3.up * 0.001f );
                         o.transform.localScale = new Vector3(GridSize, GridSize, GridSize);
                         _debugVisuals.Add(o);
                     }
@@ -350,6 +354,11 @@ public class GridManager : MonoBehaviour
     {
         grid.x = (int)(pos.x / GridSize);
         grid.y = (int)(pos.z / GridSize);
+    }
+
+    public void GridToPosition( ref IntVector2 grid, ref Vector3 pos )
+    {
+        pos.Set(grid.x * GridSize, 0f, grid.y * GridSize);
     }
 
 	#region Occupants
@@ -453,7 +462,7 @@ public class GridManager : MonoBehaviour
             
             triedValues.Add( sig, true );
             
-            pos.Set( x * GridSize, 0f, y * GridSize );
+            GridToPosition( ref _tmpGrid, ref pos );
             if (NavMesh.SamplePosition(pos, out hit, GridSize, -1))
             {
                 _tmpGrid.Set( x, y );

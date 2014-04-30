@@ -48,7 +48,7 @@ public class RandomMover : MonoBehaviour {
         
         if (_gridContainer.IsValid(ref vec))
         {
-            destination.Set(vec.x * _gridContainer.GridSize, 0f, vec.y * _gridContainer.GridSize);
+            _gridContainer.GridToPosition( ref vec, ref destination );
             _navAgent.destination = destination;
             
             debugObject.transform.position = destination + (Vector3.up * 0.1f);
