@@ -12,6 +12,8 @@ public class GridManager : MonoBehaviour
         public int x;
         public int y;
 
+        public void Set( int _x, int _y ) { x = _x; y = _y; }
+
         public bool Equals( ref IntVector2 other )
         {
             return (x == other.x) && (y == other.y);
@@ -34,13 +36,14 @@ public class GridManager : MonoBehaviour
 
         private int _id = -1;                                       // Unique ID
         private GridManager _manager;                               // Reference to the parent grid manager
-        private int _currentX;                                      // Last known center of this Occupant :X
-        private int _currentY;                                      //                                    :Y
+        private GridManager.IntVector2 _current;                    // Last known coordinates of this occupant
         private int _magnitude;                                     // The extent to which this Occupant extends from center
+        private int _debugTileCounter = 0;
 
         // List to hold debug visual currently used by this Occupant
         private List< GameObject > debugVisuals = new List<GameObject>();
 
+        // Getter for the occupant ID
         public int ID { get { return _id; } }
 
         public InternalOccupant( GridManager manager )
@@ -49,6 +52,7 @@ public class GridManager : MonoBehaviour
             _id = IdCounter++;
         }
 
+        // Set the magnitude for the occupant
         public void SetMagnitude( int magnitude )
         {
             _magnitude = magnitude;
@@ -64,12 +68,13 @@ public class GridManager : MonoBehaviour
             }
             
             debugVisuals.Clear();
+            _debugTileCounter = 0;
         }
 
-        public void Setup( int x, int y )
+        // Mark the grid with this occupant's new coordinates
+        public void Setup( IntVector2 vec )
         {
-            _currentX = x;
-            _currentY = y;
+            _current = vec;
 
             // Stamp this occupant into the grid
             Occupy(false);
@@ -78,7 +83,8 @@ public class GridManager : MonoBehaviour
         // Add or remove this occupants area to the grid
         public void Occupy( bool remove )
         {
-            int debugTileCounter = 0;
+            _debugTileCounter = 0; // More straighforward counter for which tile is being updated within UpdateDebugVisuals
+            GridManager.IntVector2 temp = new GridManager.IntVector2();
 
             // For each row in this occupant's area
             for( int i = -_magnitude; i <= _magnitude; i++ )
@@ -86,59 +92,78 @@ public class GridManager : MonoBehaviour
                 // For each column in this occupant's area
                 for( int j = -_magnitude; j <= _magnitude; j++ )
                 {
-                    int x = _currentX + i;
-                    int y = _currentY + j;
-                    int sig = _manager.GetGridSig( x, y );
-                    List< int > bucket = null;
-                    if( _manager._occupantBuckets.TryGetValue( sig, out bucket ) )
-                    {
-                        if( remove )
-                        {
-                            bucket.Remove( _id );
+                    temp.Set( _current.x + i, _current.y + j );
+                    int sig = _manager.GetGridSig( ref temp );
 
-                            if( bucket.Count == 0 )
-                            {
-                                _manager._intListPool.ReturnObject( bucket );
-                                _manager._occupantBuckets.Remove( sig );
-                            }
-                        } else {
-                            if( !bucket.Contains( _id ) )
-                            {
-                                bucket.Add( _id );
-                            }
-                        }
-                    } else {
-                        if( !remove )
-                        {
-                            bucket = _manager._intListPool.GetObject();
-                            bucket.Add( _id );
-                            _manager._occupantBuckets.Add( sig, bucket );
-                        }
+                    if( remove ) 
+                    {
+                        RemoveFootprintFromGrid( sig );
+                    }
+                    else 
+                    {
+                        AddFootprintToGrid( sig );
                     }
 
-                    if( !remove && _manager._showDebug && _manager.occupiedTilePrefab != null )
-                    {
-                        // Attempt to reuse a grid
-                        if( debugTileCounter >= debugVisuals.Count )
-                        {
-                            GameObject newVisual = Instantiate( _manager.occupiedTilePrefab ) as GameObject;
-                            newVisual.transform.localScale = new Vector3( _manager.GridSize, _manager.GridSize, 1f );
-                            debugVisuals.Add( newVisual );
-                        }
-                        debugVisuals[ debugTileCounter ].transform.position = new Vector3( x * _manager.GridSize, 0.002f, y * _manager.GridSize );
-
-                        debugTileCounter++;
-                    }
+                    UpdateDebugVisuals( remove, ref temp );
                 }
+            }
+        }
+
+        private void AddFootprintToGrid( int sig )
+        {
+            List< int > bucket = null;
+            if( _manager._occupantBuckets.TryGetValue( sig, out bucket ) )
+            {
+                if( !bucket.Contains( _id ) )
+                {
+                    bucket.Add( _id );
+                }
+            } else {
+                bucket = _manager._intListPool.GetObject();
+                bucket.Add( _id );
+                _manager._occupantBuckets.Add( sig, bucket );
+            }
+        }
+
+        private void RemoveFootprintFromGrid( int sig )
+        {
+            List< int > bucket = null;
+            if( _manager._occupantBuckets.TryGetValue( sig, out bucket ) )
+            {
+                bucket.Remove( _id );
+                
+                if( bucket.Count == 0 )
+                {
+                    _manager._intListPool.ReturnObject( bucket );
+                    _manager._occupantBuckets.Remove( sig );
+                }
+            }
+        }
+
+        private void UpdateDebugVisuals( bool remove, ref GridManager.IntVector2 vec )
+        {
+            if( !remove && _manager._showDebug && _manager.occupiedTilePrefab != null )
+            {
+                // Attempt to reuse a grid
+                if( _debugTileCounter >= debugVisuals.Count )
+                {
+                    GameObject newVisual = Instantiate( _manager.occupiedTilePrefab ) as GameObject;
+                    newVisual.transform.localScale = new Vector3( _manager.GridSize, _manager.GridSize, 1f );
+                    debugVisuals.Add( newVisual );
+                }
+                debugVisuals[ _debugTileCounter ].transform.position = new Vector3( vec.x * _manager.GridSize, 0.002f, vec.y * _manager.GridSize );
+                
+                _debugTileCounter++;
             }
         }
     }
 
+    // Simple class to support templated object pooling
     private class GenericPool<T> {
         private Stack< T > _pool = new Stack< T >();
-
+        
         public delegate T CreateObject();
-
+        
         private CreateObject _func = null;
 
         public GenericPool( CreateObject func )
@@ -172,10 +197,15 @@ public class GridManager : MonoBehaviour
         }
     };
 
+    // Inspector checkbox to trigger rebuilding of tiles
     public bool Rebuild = false;
 
+    // The size in Unity meters of the length of one grid square
 	public float GridSize = 0.25f;
+    // The length in squares of one side of the entire possible grid space
 	public int GridRowMax = 1024;
+
+    private int _exponent = 0;
 
     public GameObject vacantTilePrefab = null;
     public GameObject occupiedTilePrefab = null;
@@ -206,6 +236,19 @@ public class GridManager : MonoBehaviour
         return new InternalOccupant(this);
     }
 
+    public void Awake()
+    {
+        DetermineExponent();
+    }
+
+    private void DetermineExponent()
+    {
+        while (( GridRowMax >> _exponent ) != 1)
+        {
+            _exponent++;
+        }
+    }
+
     // Update is called once per frame
 	void Update () 
     {
@@ -215,16 +258,16 @@ public class GridManager : MonoBehaviour
             {
                 foreach (int sig in validGrids)
                 {
-                    int x, y;
-                    SigToGrid(sig, out x, out y);
 
-                    int xx = Mathf.Abs(x % 2);
-                    int yy = Mathf.Abs(y % 2);
+                    SigToGrid(sig, ref _tmpGrid);
+
+                    int xx = Mathf.Abs(_tmpGrid.x % 2);
+                    int yy = Mathf.Abs(_tmpGrid.y % 2);
                     if ((xx == 0 && yy == 1) || (xx == 1 && yy == 0))
                     {
                         GameObject o = Instantiate(vacantTilePrefab) as GameObject;
                         o.transform.forward = Vector3.down;
-                        o.transform.position = new Vector3(x * GridSize, 0.001f, y * GridSize);
+                        o.transform.position = new Vector3(_tmpGrid.x * GridSize, 0.001f, _tmpGrid.y * GridSize);
                         o.transform.localScale = new Vector3(GridSize, GridSize, GridSize);
                         _debugVisuals.Add(o);
                     }
@@ -270,17 +313,17 @@ public class GridManager : MonoBehaviour
         _debugVisuals.Clear();
     }
 
-    public bool IsValid( int x, int y )
+    public bool IsValid( ref IntVector2 vec )
     {
-        int sig = GetGridSig(x, y);
+        int sig = GetGridSig(ref vec);
 
         return (validGrids.BinarySearch(sig) > -1);
     }
 
-    public bool IsOccupied( int x, int y, Reservation optionalFilter = null )
+    public bool IsOccupied( ref IntVector2 vec, Reservation optionalFilter = null )
     {
         List< int > occupants = null;
-        bool exists = _occupantBuckets.TryGetValue(GetGridSig(x, y), out occupants);
+        bool exists = _occupantBuckets.TryGetValue(GetGridSig(ref vec), out occupants);
 
         if( optionalFilter == null || !exists )
         {
@@ -291,23 +334,16 @@ public class GridManager : MonoBehaviour
         return !occupants.Contains(occupant.ID);
     }
 
-    private int GetGridSig( int x, int y )
+    private int GetGridSig( ref IntVector2 vec )
     {
-        /*
-         * int packedX = x + (GridRowMax / 2);
-        int packedY = y + (GridRowMax / 2);
-        return ( packedX ) + ( packedY * GridRowMax ); */
-
-        return ( x + (GridRowMax / 2) ) + ( ( y + (GridRowMax / 2) ) * GridRowMax );
+        return ( vec.x + ( GridRowMax / 2 ) ) + ( ( vec.y + ( GridRowMax / 2 ) ) << _exponent);
     }
 
-    private void SigToGrid( int sig, out int x, out int y )
+    private void SigToGrid( int sig, ref IntVector2 vec )
     {
-        x = ( sig % GridRowMax ) - ( GridRowMax / 2 );
-
-        int packedY = sig - (x + (GridRowMax / 2));
-        packedY /= GridRowMax;
-        y = packedY - ( GridRowMax / 2 ); 
+        vec.x = ( sig % GridRowMax ) - ( GridRowMax / 2 );
+        sig >>= _exponent;
+        vec.y = ( sig % GridRowMax ) - ( GridRowMax / 2 );
     }
 
     public void PositionToGrid( Vector3 pos, ref IntVector2 grid )
@@ -330,7 +366,7 @@ public class GridManager : MonoBehaviour
         PositionToGrid(thing.transform.position, ref _tmpGrid);
 
         occupant.Occupy(true);
-        occupant.Setup(_tmpGrid.x, _tmpGrid.y);
+        occupant.Setup(_tmpGrid);
     }
 
     public void ReturnOccupant( ref Occupant occ )
@@ -360,7 +396,7 @@ public class GridManager : MonoBehaviour
 		PositionToGrid(pos, ref _tmpGrid);
 		
 		o.SetMagnitude(magnitude);
-		o.Setup(_tmpGrid.x, _tmpGrid.y);
+		o.Setup(_tmpGrid);
 		
 		_occupants.Add(o);
 		
@@ -380,6 +416,14 @@ public class GridManager : MonoBehaviour
 #if UNITY_EDITOR
     void FillValidGrids()
     {
+        if (!Mathf.IsPowerOfTwo(GridRowMax))
+        {
+            Debug.LogError( "GridManager: Invalid GridRowMax, must be Power of Two" );
+            return;
+        }
+
+        DetermineExponent();
+
         Dictionary< int, bool > triedValues = new Dictionary< int, bool >();
         bool b;
         
@@ -389,28 +433,34 @@ public class GridManager : MonoBehaviour
         Stack< int > neighborsToTry = new Stack< int >();
         
         // Start it off
-        neighborsToTry.Push(GetGridSig(0, 0));
+        _tmpGrid.Set(0, 0);
+        neighborsToTry.Push(GetGridSig(ref _tmpGrid));
         
         int sig = 0;
         int x, y;
         
         int maxStackSize = 0;
-        
+        IntVector2 tmpGrid2 = new IntVector2();
+
         while (neighborsToTry.Count > 0)
         {
             maxStackSize = Mathf.Max( maxStackSize, neighborsToTry.Count );
             
             sig = neighborsToTry.Pop();
-            SigToGrid( sig, out x, out y );
+            SigToGrid( sig, ref _tmpGrid );
+            x = _tmpGrid.x;
+            y = _tmpGrid.y;
             
             triedValues.Add( sig, true );
             
             pos.Set( x * GridSize, 0f, y * GridSize );
             if (NavMesh.SamplePosition(pos, out hit, GridSize, -1))
             {
-                validGrids.Add(GetGridSig(x, y));
+                _tmpGrid.Set( x, y );
+                validGrids.Add(GetGridSig(ref _tmpGrid));
                 
                 int nextX, nextY = 0;
+
                 for (int i = 0; i < 4; i++)
                 {
                     if (i == 0 || i == 2)
@@ -422,8 +472,9 @@ public class GridManager : MonoBehaviour
                         nextY = y + ((i == 1) ? -1 : 1);
                         nextX = x;
                     }
-                    
-                    int nextSig = GetGridSig(nextX, nextY);
+
+                    tmpGrid2.Set( nextX, nextY );
+                    int nextSig = GetGridSig(ref tmpGrid2);
                     if (!triedValues.TryGetValue(nextSig, out b) && !neighborsToTry.Contains(nextSig))
                     {
                         neighborsToTry.Push(nextSig);

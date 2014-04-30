@@ -63,7 +63,7 @@ public class Swarmer : MonoBehaviour {
 
                 _gridContainer.PositionToGrid( tryPos, ref grid );
 
-                if( _gridContainer.IsValid( grid.x, grid.y ) && !_gridContainer.IsOccupied( grid.x, grid.y ) )
+                if( _gridContainer.IsValid( ref grid ) && !_gridContainer.IsOccupied( ref grid ) )
                 {
                     _reservation = _gridContainer.CreateReservation( tryPos );
                     _navAgent.destination = tryPos;
@@ -99,7 +99,7 @@ public class Swarmer : MonoBehaviour {
 			{
 				GridManager.IntVector2 grid = new GridManager.IntVector2();
                 _gridContainer.PositionToGrid( _navAgent.destination, ref grid );
-                if( _gridContainer.IsOccupied( grid.x, grid.y, _reservation ) )
+                if( _gridContainer.IsOccupied( ref grid, _reservation ) )
                 {
                     _gridContainer.ReturnReservation(ref _reservation);
                     needsDestination = true;

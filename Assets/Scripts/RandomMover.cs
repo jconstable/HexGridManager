@@ -42,14 +42,13 @@ public class RandomMover : MonoBehaviour {
 
     void GetNewDestination()
     {
-        int x, y;
+        GridManager.IntVector2 vec = new GridManager.IntVector2();
         
-        x = Random.Range(-70, 70);
-        y = Random.Range(-70, 70);
+        vec.Set(Random.Range(-70, 70), Random.Range(-70, 70));
         
-        if (_gridContainer.IsValid(x, y))
+        if (_gridContainer.IsValid(ref vec))
         {
-            destination.Set(x * _gridContainer.GridSize, 0f, y * _gridContainer.GridSize);
+            destination.Set(vec.x * _gridContainer.GridSize, 0f, vec.y * _gridContainer.GridSize);
             _navAgent.destination = destination;
             
             debugObject.transform.position = destination + (Vector3.up * 0.1f);
@@ -68,7 +67,7 @@ public class RandomMover : MonoBehaviour {
         {
             _gridContainer.PositionToGrid( destination, ref tempGrid );
 
-            if( mag < _navAgent.speed && _gridContainer.IsOccupied( tempGrid.x, tempGrid.y ) )
+            if( mag < _navAgent.speed && _gridContainer.IsOccupied( ref tempGrid ) )
             {
                 GetNewDestination();
             }
