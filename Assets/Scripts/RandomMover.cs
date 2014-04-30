@@ -37,6 +37,7 @@ public class RandomMover : MonoBehaviour {
     void OnDestroy() 
     {
         _gridContainer.ReturnOccupant(ref _occupant);
+		Destroy (debugObject);
     }
 
     void GetNewDestination()
@@ -59,11 +60,10 @@ public class RandomMover : MonoBehaviour {
 	void Update () {
 
         float mag = _navAgent.velocity.magnitude;
-        if ( mag == 0f && roam)
+        if ( mag == 0f && roam )
         {
             GetNewDestination();
-        } 
-         
+        }
         else
         {
             _gridContainer.PositionToGrid( destination, ref tempGrid );
@@ -75,7 +75,7 @@ public class RandomMover : MonoBehaviour {
 
             _gridContainer.PositionToGrid( transform.position, ref tempGrid );
 
-            if( tempGrid.x != currentGrid.x || tempGrid.y != currentGrid.y )
+            if( !tempGrid.Equals( ref currentGrid ) )
             {
                 currentGrid = tempGrid;
                 _gridContainer.UpdateOccupant( _occupant, gameObject );

@@ -11,6 +11,11 @@ public class GridManager : MonoBehaviour
     {
         public int x;
         public int y;
+
+        public bool Equals( ref IntVector2 other )
+        {
+            return (x == other.x) && (y == other.y);
+        }
     }
 
     // Public interface to allow users of this class to reference their Occupants without 
@@ -18,8 +23,11 @@ public class GridManager : MonoBehaviour
     public interface Occupant {
     }
 
+	public interface Reservation {
+	}
+
     // Class that ecapsulates a 2D region of occupied grid squares
-    private class InternalOccupant : Occupant 
+    private class InternalOccupant : Occupant, Reservation
     {
         // Static to uniquely identify every Occupant that is created
         private static int IdCounter = 0;
@@ -32,6 +40,8 @@ public class GridManager : MonoBehaviour
 
         // List to hold debug visual currently used by this Occupant
         private List< GameObject > debugVisuals = new List<GameObject>();
+
+        public int ID { get { return _id; } }
 
         public InternalOccupant( GridManager manager )
         {
@@ -264,13 +274,21 @@ public class GridManager : MonoBehaviour
     {
         int sig = GetGridSig(x, y);
 
-        return (BinarySearch(validGrids, sig) > -1);
+        return (validGrids.BinarySearch(sig) > -1);
     }
 
-    public bool IsOccupied( int x, int y )
+    public bool IsOccupied( int x, int y, Reservation optionalFilter = null )
     {
         List< int > occupants = null;
-        return _occupantBuckets.TryGetValue(GetGridSig(x, y), out occupants);
+        bool exists = _occupantBuckets.TryGetValue(GetGridSig(x, y), out occupants);
+
+        if( optionalFilter == null || !exists )
+        {
+            return exists;
+        }
+
+        InternalOccupant occupant = optionalFilter as InternalOccupant;
+        return !occupants.Contains(occupant.ID);
     }
 
     private int GetGridSig( int x, int y )
@@ -298,19 +316,11 @@ public class GridManager : MonoBehaviour
         grid.y = (int)(pos.z / GridSize);
     }
 
+	#region Occupants
     private IntVector2 _tmpGrid = new IntVector2();
     public Occupant CreateOccupant( GameObject thing, int magnitude )
     {
-        InternalOccupant o = _occupantPool.GetObject();
-
-        PositionToGrid(thing.transform.position, ref _tmpGrid);
-
-        o.SetMagnitude(magnitude);
-        o.Setup(_tmpGrid.x, _tmpGrid.y);
-
-        _occupants.Add(o);
-
-        return (Occupant)o;
+        return (Occupant)CreateInternalOccupant( thing.transform.position, magnitude );
     }
 
     public void UpdateOccupant( Occupant occ, GameObject thing )
@@ -325,57 +335,47 @@ public class GridManager : MonoBehaviour
 
     public void ReturnOccupant( ref Occupant occ )
     {
-        InternalOccupant occupant = occ as InternalOccupant;
-        _occupants.Remove(occupant);
-
-        occupant.DestroyVisuals();
-        occupant.Occupy(true);
-
-        _occupantPool.ReturnObject(occupant);
-        occ = null;
+		ReturnInternalOccupant (occ as InternalOccupant);
+		occ = null;
     }
+	#endregion
 
-    private int BinarySearch( List< int > list, int value )
-    {
-        if (list == null)
-            return -1;
+	#region Reservations
+	public Reservation CreateReservation( Vector3 pos )
+	{
+		return (Reservation)CreateInternalOccupant( pos, 0 );
+	}
 
-        int floor = 0;
-        int ceil = Mathf.Max( 0, list.Count - 1 );
-        int mid = -1;
-        int midIndex = -1;
+	public void ReturnReservation( ref Reservation res )
+	{
+		ReturnInternalOccupant (res as InternalOccupant);
+		res = null;
+	}
+	#endregion
 
-        while (floor < ceil)
-        {
-            if( list[ floor ] == value )return floor;
-            if( list[ ceil ] == value )return ceil;
+	private InternalOccupant CreateInternalOccupant( Vector3 pos, int magnitude )
+	{
+		InternalOccupant o = _occupantPool.GetObject();
+		
+		PositionToGrid(pos, ref _tmpGrid);
+		
+		o.SetMagnitude(magnitude);
+		o.Setup(_tmpGrid.x, _tmpGrid.y);
+		
+		_occupants.Add(o);
+		
+		return o;
+	}
 
-            if( floor + 1 == ceil )
-            {
-                return -1;
-            }
-
-            midIndex = ( ( ceil - floor ) / 2 ) + floor;
-            mid = list[ midIndex ];
-            
-            if( mid == value )
-            { 
-                return midIndex; 
-            }
-            
-            if( mid > value ) 
-            { 
-                ceil = midIndex;
-            }
-            else
-            {
-                floor = midIndex;
-            }
-        }
-        
-        
-        return -1;
-    }
+	private void ReturnInternalOccupant( InternalOccupant occupant )
+	{
+		_occupants.Remove(occupant);
+		
+		occupant.DestroyVisuals();
+		occupant.Occupy(true);
+		
+		_occupantPool.ReturnObject(occupant);
+	}
 
 #if UNITY_EDITOR
     void FillValidGrids()

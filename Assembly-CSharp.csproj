@@ -5,7 +5,7 @@
 	<Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
 	<ProductVersion>10.0.20506</ProductVersion>
 	<SchemaVersion>2.0</SchemaVersion>
-	<ProjectGuid>{4116B381-B91C-8535-C39E-8D5E22BB1FCA}</ProjectGuid>
+	<ProjectGuid>{7EF3E3CF-22F1-9E61-44E2-E14C1BB2C60D}</ProjectGuid>
 	<OutputType>Library</OutputType>
 	<AppDesignerFolder>Properties</AppDesignerFolder>
 	<RootNamespace></RootNamespace>
@@ -46,10 +46,12 @@
 	</Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\CharacterAdder.cs" />
      <Compile Include="Assets\GridManager.cs" />
-     <Compile Include="Assets\RandomMover.cs" />
-     <None Include="Assets\UnlitColorShader.shader" />
+     <Compile Include="Assets\Scripts\CharacterAdder.cs" />
+     <Compile Include="Assets\Scripts\RandomMover.cs" />
+     <Compile Include="Assets\Scripts\SwarmTarget.cs" />
+     <Compile Include="Assets\Scripts\Swarmer.cs" />
+     <None Include="Assets\Shaders\UnlitColorShader.shader" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
