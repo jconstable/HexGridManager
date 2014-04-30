@@ -1,0 +1,55 @@
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2008
+
+Project("{F9EE1E8B-B936-07E8-8B0F-ECAD7DFE8F61}") = "NavMeshTest", "Assembly-CSharp.csproj", "{4116B381-B91C-8535-C39E-8D5E22BB1FCA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4116B381-B91C-8535-C39E-8D5E22BB1FCA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4116B381-B91C-8535-C39E-8D5E22BB1FCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4116B381-B91C-8535-C39E-8D5E22BB1FCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4116B381-B91C-8535-C39E-8D5E22BB1FCA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+										GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = Assembly-CSharp.csproj
+		Policies = $0
+		$0.TextStylePolicy = $1
+		$1.inheritsSet = VisualStudio
+		$1.inheritsScope = text/plain
+		$1.scope = text/x-csharp
+		$0.CSharpFormattingPolicy = $2
+		$2.IndentSwitchBody = True
+		$2.AnonymousMethodBraceStyle = NextLine
+		$2.PropertyBraceStyle = NextLine
+		$2.PropertyGetBraceStyle = NextLine
+		$2.PropertySetBraceStyle = NextLine
+		$2.EventBraceStyle = NextLine
+		$2.EventAddBraceStyle = NextLine
+		$2.EventRemoveBraceStyle = NextLine
+		$2.StatementBraceStyle = NextLine
+		$2.ArrayInitializerBraceStyle = NextLine
+		$2.BeforeMethodDeclarationParentheses = False
+		$2.BeforeMethodCallParentheses = False
+		$2.BeforeConstructorDeclarationParentheses = False
+		$2.BeforeDelegateDeclarationParentheses = False
+		$2.NewParentheses = False
+		$2.inheritsSet = Mono
+		$2.inheritsScope = text/x-csharp
+		$2.scope = text/x-csharp
+		$0.TextStylePolicy = $3
+		$3.FileWidth = 120
+		$3.TabWidth = 4
+		$3.EolMarker = Unix
+		$3.inheritsSet = Mono
+		$3.inheritsScope = text/plain
+		$3.scope = text/plain
+	EndGlobalSection
+
+EndGlobal
