@@ -389,12 +389,32 @@ public class HexGridManager : MonoBehaviour
     public void PositionToGrid( Vector3 pos, ref IntVector2 grid )
     {
         float g = (float)GridSize;
+
+        /*
         float z = pos.z / (g * (3.0f / 2.0f));
 
         float t = g * Mathf.Sqrt(3.0f);
-        float x = ( pos.x / t ) - ( z / 2.0f );
+        float x = ( pos.x ) - ( (t * z) / 2.0f );
+        x /= t;
         grid.x = (int)x;
-        grid.y = (int)z;
+        grid.y = (int)z;*/
+
+
+        float q = ((1f/3f) * ( Mathf.Sqrt(3f) *  pos.x )) - ((1f/3f) * pos.z );
+        q /= g;
+        float r = ((2f / 3f) * pos.z) / g;
+
+        /*
+        float x = (pos.x - (g/2f)) / g;
+        
+        float t1 = pos.z / (g / 2f);
+        float t2 = Mathf.Floor(x + t1);
+        float r = Mathf.Floor((Mathf.Floor(t1 - x) + t2) / 3f); 
+        float q = Mathf.Floor((Mathf.Floor( 2f * x + 1f) + t2) / 3f) - r;*/
+
+
+        grid.x = (int)q;
+        grid.y = (int)r;
     }
     
     public void GridToPosition( ref IntVector2 grid, ref Vector3 pos )

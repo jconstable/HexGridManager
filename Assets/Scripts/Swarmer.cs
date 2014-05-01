@@ -62,7 +62,7 @@ public class Swarmer : MonoBehaviour {
 		
 		else
 		{
-			_gridContainer.PositionToGrid( transform.position, ref tempGrid );
+			//_gridContainer.PositionToGrid( transform.position, ref tempGrid );
 			
 			if( !tempGrid.Equals( ref currentGrid ) )
 			{
