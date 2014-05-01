@@ -13,7 +13,7 @@ public class SwarmTarget : MonoBehaviour {
 	void Start () {
 		GameObject gridContainer = GameObject.FindGameObjectWithTag("GridContainer");
         _gridContainer = gridContainer.GetComponent< HexGridManager >();
-		_occupant = _gridContainer.CreateOccupant(gameObject, 2);
+		_occupant = _gridContainer.CreateOccupant(gameObject, 1);
 	}
 	
 	void OnDestroy() 

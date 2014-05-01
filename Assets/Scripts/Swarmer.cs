@@ -42,7 +42,7 @@ public class Swarmer : MonoBehaviour {
         Vector3 destination = Vector3.zero;
         _gridContainer.GridToPosition(ref targetGrid, ref destination);
 
-        //_navAgent.destination = destination;
+        _navAgent.destination = destination;
         _reservation = _gridContainer.CreateReservation(destination);
 
         GameObject s = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -62,7 +62,7 @@ public class Swarmer : MonoBehaviour {
 		
 		else
 		{
-			//_gridContainer.PositionToGrid( transform.position, ref tempGrid );
+			_gridContainer.PositionToGrid( transform.position, ref tempGrid );
 			
 			if( !tempGrid.Equals( ref currentGrid ) )
 			{

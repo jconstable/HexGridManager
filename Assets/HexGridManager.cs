@@ -412,9 +412,8 @@ public class HexGridManager : MonoBehaviour
         float r = Mathf.Floor((Mathf.Floor(t1 - x) + t2) / 3f); 
         float q = Mathf.Floor((Mathf.Floor( 2f * x + 1f) + t2) / 3f) - r;*/
 
-
-        grid.x = (int)q;
-        grid.y = (int)r;
+        grid.x = Mathf.RoundToInt( q );
+        grid.y = Mathf.RoundToInt( r );
     }
     
     public void GridToPosition( ref IntVector2 grid, ref Vector3 pos )
