@@ -3,24 +3,24 @@ using System.Collections;
 
 public class RandomMover : MonoBehaviour {
 
-    private GridManager _gridContainer = null;
+    private HexGridManager _gridContainer = null;
     private NavMeshAgent _navAgent = null;
 
     public Vector3 destination = new Vector3();
 
-    private GridManager.Occupant _occupant = null;
+    private HexGridManager.Occupant _occupant = null;
     public GameObject debugPrefab = null;
     private GameObject debugObject = null;
 
-    GridManager.IntVector2 currentGrid = new GridManager.IntVector2();
-    GridManager.IntVector2 tempGrid = new GridManager.IntVector2();
+    HexGridManager.IntVector2 currentGrid = new HexGridManager.IntVector2();
+    HexGridManager.IntVector2 tempGrid = new HexGridManager.IntVector2();
 
     public bool roam = false;
 
 	// Use this for initialization
 	void Start () {
         GameObject gridContainer = GameObject.FindGameObjectWithTag("GridContainer");
-        _gridContainer = gridContainer.GetComponent< GridManager >();
+        _gridContainer = gridContainer.GetComponent< HexGridManager >();
         _navAgent = GetComponent< NavMeshAgent >();
 
         if (debugPrefab)
@@ -42,7 +42,7 @@ public class RandomMover : MonoBehaviour {
 
     void GetNewDestination()
     {
-        GridManager.IntVector2 vec = new GridManager.IntVector2();
+        HexGridManager.IntVector2 vec = new HexGridManager.IntVector2();
         
         vec.Set(Random.Range(-70, 70), Random.Range(-70, 70));
         

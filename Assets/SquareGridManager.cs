@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 // Execute in edit mode to enable the rebuild checkbox
 [ExecuteInEditMode]
-public class GridManager : MonoBehaviour 
+public class SquareGridManager : MonoBehaviour 
 {
     // Simple container to remove need for a normal Vector2 for holding grid coordinates
     public struct IntVector2
@@ -29,14 +29,14 @@ public class GridManager : MonoBehaviour
 	}
 
     // Class that ecapsulates a 2D region of occupied grid squares
-    private class InternalOccupant : Occupant, Reservation
+    protected class InternalOccupant : Occupant, Reservation
     {
         // Static to uniquely identify every Occupant that is created
         private static int IdCounter = 0;
 
         private int _id = -1;                                       // Unique ID
-        private GridManager _manager;                               // Reference to the parent grid manager
-        private GridManager.IntVector2 _current;                    // Last known coordinates of this occupant
+        private SquareGridManager _manager;                               // Reference to the parent grid manager
+        private SquareGridManager.IntVector2 _current;                    // Last known coordinates of this occupant
         private int _magnitude;                                     // The extent to which this Occupant extends from center
         private int _debugTileCounter = 0;
 
@@ -46,7 +46,7 @@ public class GridManager : MonoBehaviour
         // Getter for the occupant ID
         public int ID { get { return _id; } }
 
-        public InternalOccupant( GridManager manager )
+        public InternalOccupant( SquareGridManager manager )
         {
             _manager = manager;
             _id = IdCounter++;
@@ -84,7 +84,7 @@ public class GridManager : MonoBehaviour
         public void Occupy( bool remove )
         {
             _debugTileCounter = 0; // More straighforward counter for which tile is being updated within UpdateDebugVisuals
-            GridManager.IntVector2 temp = new GridManager.IntVector2();
+            SquareGridManager.IntVector2 temp = new SquareGridManager.IntVector2();
 
             // For each row in this occupant's area
             for( int i = -_magnitude; i <= _magnitude; i++ )
@@ -140,7 +140,7 @@ public class GridManager : MonoBehaviour
             }
         }
 
-        private void UpdateDebugVisuals( bool remove, ref GridManager.IntVector2 vec )
+        private void UpdateDebugVisuals( bool remove, ref SquareGridManager.IntVector2 vec )
         {
             if( !remove && _manager._showDebug && _manager.occupiedTilePrefab != null )
             {
@@ -223,7 +223,7 @@ public class GridManager : MonoBehaviour
     private GenericPool< InternalOccupant > _occupantPool = null;
 
 	// Use this for initialization
-    public GridManager () {
+    public SquareGridManager () {
         _intListPool = new GenericPool< List< int > >(CreateNewList);
         _occupantPool = new GenericPool< InternalOccupant >(CreateNewOccupant);
 	}
@@ -446,7 +446,6 @@ public class GridManager : MonoBehaviour
         neighborsToTry.Push(GetGridSig(ref _tmpGrid));
         
         int sig = 0;
-        int x, y;
         
         int maxStackSize = 0;
         IntVector2 tmpGrid2 = new IntVector2();
@@ -457,16 +456,13 @@ public class GridManager : MonoBehaviour
             
             sig = neighborsToTry.Pop();
             SigToGrid( sig, ref _tmpGrid );
-            x = _tmpGrid.x;
-            y = _tmpGrid.y;
             
             triedValues.Add( sig, true );
             
             GridToPosition( ref _tmpGrid, ref pos );
             if (NavMesh.SamplePosition(pos, out hit, GridSize, -1))
             {
-                _tmpGrid.Set( x, y );
-                validGrids.Add(GetGridSig(ref _tmpGrid));
+                validGrids.Add(sig);
                 
                 int nextX, nextY = 0;
 
@@ -474,12 +470,12 @@ public class GridManager : MonoBehaviour
                 {
                     if (i == 0 || i == 2)
                     {
-                        nextX = x + ((i == 0) ? 1 : -1);
-                        nextY = y;
+                        nextX = _tmpGrid.x + ((i == 0) ? 1 : -1);
+                        nextY = _tmpGrid.y;
                     } else
                     {
-                        nextY = y + ((i == 1) ? -1 : 1);
-                        nextX = x;
+                        nextY = _tmpGrid.y + ((i == 1) ? -1 : 1);
+                        nextX = _tmpGrid.x;
                     }
 
                     tmpGrid2.Set( nextX, nextY );

@@ -46,11 +46,14 @@
 	</Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\GridManager.cs" />
+     <Compile Include="Assets\HexGridManager.cs" />
      <Compile Include="Assets\Scripts\CharacterAdder.cs" />
+     <Compile Include="Assets\Scripts\Hex.cs" />
+     <Compile Include="Assets\Scripts\HexModel.cs" />
      <Compile Include="Assets\Scripts\RandomMover.cs" />
      <Compile Include="Assets\Scripts\SwarmTarget.cs" />
      <Compile Include="Assets\Scripts\Swarmer.cs" />
+     <Compile Include="Assets\SquareGridManager.cs" />
      <None Include="Assets\Shaders\UnlitColorShader.shader" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

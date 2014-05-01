@@ -4,21 +4,21 @@ using System.Collections;
 public class Swarmer : MonoBehaviour {
 	public static readonly int KeyPositionsAroundTarget = 6;
 
-	private GridManager _gridContainer = null;
+    private HexGridManager _gridContainer = null;
 	private NavMeshAgent _navAgent = null;
 	private SwarmTarget _target = null;
     private bool needsDestination = true;
 	
-	private GridManager.Occupant _occupant = null;
-	private GridManager.Reservation _reservation = null;
+    private HexGridManager.Occupant _occupant = null;
+    private HexGridManager.Reservation _reservation = null;
 	
-	GridManager.IntVector2 currentGrid = new GridManager.IntVector2();
-	GridManager.IntVector2 tempGrid = new GridManager.IntVector2();
+    HexGridManager.IntVector2 currentGrid = new HexGridManager.IntVector2();
+    HexGridManager.IntVector2 tempGrid = new HexGridManager.IntVector2();
 	
 	// Use this for initialization
 	void Start () {
 		GameObject gridContainer = GameObject.FindGameObjectWithTag("GridContainer");
-		_gridContainer = gridContainer.GetComponent< GridManager >();
+        _gridContainer = gridContainer.GetComponent< HexGridManager >();
 
 		_navAgent = GetComponent< NavMeshAgent >();
 
@@ -38,49 +38,18 @@ public class Swarmer : MonoBehaviour {
 	
 	void FindSwarmDestination()
 	{
-		Vector3 dir = transform.position - _target.transform.position;
-		dir.Normalize ();
+        HexGridManager.IntVector2 targetGrid = _gridContainer.GetClosestVacantNeighbor(_target.gameObject, gameObject);
+        Vector3 destination = Vector3.zero;
+        _gridContainer.GridToPosition(ref targetGrid, ref destination);
 
-		_target.swarmCount++;
+        //_navAgent.destination = destination;
+        _reservation = _gridContainer.CreateReservation(destination);
 
-        GridManager.IntVector2 grid = new GridManager.IntVector2();
-        int magnitude = 1;
-		while( needsDestination )
-		{
-            int rotations = KeyPositionsAroundTarget;
-            float angleDelta = ( 360.0f / ( 2 * rotations ) );
-            for( int i = 0; i < rotations; i++ )
-            {
-                float angle = angleDelta * i;
-                if( _target.swarmCount % 2 == 0 ) angle = 360 - angle;
-                Quaternion quat = Quaternion.AngleAxis( angle, Vector3.up );
-                Vector3 tryDir = quat * dir;
+        GameObject s = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        s.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+        s.transform.position = destination;
 
-
-                Vector3 tryPos = tryDir * magnitude * _gridContainer.GridSize;
-
-                tryPos += _target.transform.position;
-
-                _gridContainer.PositionToGrid( tryPos, ref grid );
-
-                if( _gridContainer.IsValid( ref grid ) && !_gridContainer.IsOccupied( ref grid ) )
-                {
-                    _reservation = _gridContainer.CreateReservation( tryPos );
-                    _navAgent.destination = tryPos;
-                    needsDestination = false;
-                    break;
-                }
-            }
-
-            magnitude++;
-
-            // Bail out if needed
-            if( magnitude > 5 )
-            {
-                needsDestination = false;
-                return;
-            }
-		}
+        needsDestination = false;
 	}
 	
 	// Update is called once per frame
@@ -97,7 +66,7 @@ public class Swarmer : MonoBehaviour {
 			
 			if( !tempGrid.Equals( ref currentGrid ) )
 			{
-				GridManager.IntVector2 grid = new GridManager.IntVector2();
+                HexGridManager.IntVector2 grid = new HexGridManager.IntVector2();
                 _gridContainer.PositionToGrid( _navAgent.destination, ref grid );
                 if( _gridContainer.IsOccupied( ref grid, _reservation ) )
                 {
