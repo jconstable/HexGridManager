@@ -4,9 +4,9 @@
 EditorSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 3
-  m_ExternalVersionControlSupport: Visible Meta Files
+  m_ExternalVersionControlSupport: Perforce
   m_SerializationMode: 2
   m_WebSecurityEmulationEnabled: 0
-  m_WebSecurityEmulationHostUrl: https://github.com
+  m_WebSecurityEmulationHostUrl: 
   m_DefaultBehaviorMode: 0
   m_SpritePackerMode: 0

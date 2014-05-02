@@ -94,11 +94,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5d805119a12a14d03aa3ff192917b71d, type: 3}
+  m_Script: {fileID: 11500000, guid: bcacd37bfd4df5645b2a7613a79fc51d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   destination: {x: 0, y: 0, z: 0}
-  debugPrefab: {fileID: 100000, guid: ba22e489d8a2f4227842eeb9995b2e08, type: 2}
+  debugPrefab: {fileID: 100000, guid: cf2e4f48c83eaaa41b570370736ff398, type: 2}
   roam: 1
 --- !u!136 &13600000
 CapsuleCollider:

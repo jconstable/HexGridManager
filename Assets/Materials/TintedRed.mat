@@ -6,8 +6,8 @@ Material:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_Name: TintedGreen
-  m_Shader: {fileID: 4800000, guid: fb741257ebb3447f1a75f1240812fc61, type: 3}
+  m_Name: TintedRed
+  m_Shader: {fileID: 4800000, guid: 4ce26f4b73ce14047873eadf04cd2169, type: 3}
   m_ShaderKeywords: []
   m_CustomRenderQueue: -1
   m_SavedProperties:
@@ -61,7 +61,7 @@ Material:
       data:
         first:
           name: _Color
-        second: {r: 0, g: 1, b: .131034613, a: 1}
+        second: {r: 1, g: 0, b: 0, a: 1}
       data:
         first:
           name: _SpecColor

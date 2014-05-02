@@ -38,17 +38,12 @@ public class Swarmer : MonoBehaviour {
 	
 	void FindSwarmDestination()
 	{
-        HexGridManager.IntVector2 targetGrid = new HexGridManager.IntVector2();
-        _gridContainer.GetClosestVacantNeighbor(_target.gameObject, ref targetGrid, gameObject);
+        _gridContainer.GetClosestVacantNeighbor(_target.gameObject, tempGrid, gameObject);
         Vector3 destination = Vector3.zero;
-        _gridContainer.GridToPosition(targetGrid, ref destination);
+        _gridContainer.GridToPosition(tempGrid, ref destination);
 
         _navAgent.destination = destination;
         _reservation = _gridContainer.CreateReservation(destination);
-
-        GameObject s = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        s.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-        s.transform.position = destination;
 
         needsDestination = false;
 	}
@@ -59,27 +54,15 @@ public class Swarmer : MonoBehaviour {
 		if ( needsDestination )
 		{
 			FindSwarmDestination();
-		} 
-		
-		else
-		{
-			_gridContainer.PositionToGrid( transform.position, tempGrid );
-			
-			if( !tempGrid.Equals( currentGrid ) )
-			{
-                HexGridManager.IntVector2 grid = new HexGridManager.IntVector2();
-                _gridContainer.PositionToGrid( _navAgent.destination, grid );
-                if( _gridContainer.IsOccupied( grid, _reservation ) )
-                {
-                    _gridContainer.ReturnReservation(ref _reservation);
-                    needsDestination = true;
-                }
-
-                _gridContainer.UpdateOccupant( _occupant, gameObject );
-                currentGrid.Set( tempGrid );
-			}
-			
-		}
-		
+		} 		
 	}
+
+    public void OnGridChanged()
+    {
+        if( _gridContainer.IsOccupied( tempGrid, _reservation ) )
+        {
+            _gridContainer.ReturnReservation(ref _reservation);
+            needsDestination = true;
+        }
+    }
 }
