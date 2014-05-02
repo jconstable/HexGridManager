@@ -31,7 +31,7 @@ public class RandomMover : MonoBehaviour {
 
         _occupant = _gridContainer.CreateOccupant(gameObject, 1);
 
-        _gridContainer.PositionToGrid(transform.position, ref currentGrid);
+        _gridContainer.PositionToGrid(transform.position, currentGrid);
 	}
 
     void OnDestroy() 
@@ -46,9 +46,9 @@ public class RandomMover : MonoBehaviour {
         
         vec.Set(Random.Range(-70, 70), Random.Range(-70, 70));
         
-        if (_gridContainer.IsValid(ref vec))
+        if (_gridContainer.IsValid(vec))
         {
-            _gridContainer.GridToPosition( ref vec, ref destination );
+            _gridContainer.GridToPosition( vec, ref destination );
             _navAgent.destination = destination;
             
             debugObject.transform.position = destination + (Vector3.up * 0.1f);
@@ -65,18 +65,18 @@ public class RandomMover : MonoBehaviour {
         }
         else
         {
-            _gridContainer.PositionToGrid( destination, ref tempGrid );
+            _gridContainer.PositionToGrid( destination, tempGrid );
 
-            if( mag < _navAgent.speed && _gridContainer.IsOccupied( ref tempGrid ) )
+            if( mag < _navAgent.speed && _gridContainer.IsOccupied( tempGrid ) )
             {
                 GetNewDestination();
             }
 
-            _gridContainer.PositionToGrid( transform.position, ref tempGrid );
+            _gridContainer.PositionToGrid( transform.position, tempGrid );
 
-            if( !tempGrid.Equals( ref currentGrid ) )
+            if( !tempGrid.Equals( currentGrid ) )
             {
-                currentGrid = tempGrid;
+                currentGrid.Set( tempGrid );
                 _gridContainer.UpdateOccupant( _occupant, gameObject );
             }
 

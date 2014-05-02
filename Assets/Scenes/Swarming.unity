@@ -508,7 +508,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 1711472503}
-  - 114: {fileID: 1711472504}
   - 114: {fileID: 1711472502}
   m_Layer: 0
   m_Name: GridContainer
@@ -546,17 +545,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
---- !u!114 &1711472504
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1711472501}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 887b71a423ab43046aa56d3b95b4c410, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &2106830637
 GameObject:
   m_ObjectHideFlags: 0

@@ -7,17 +7,19 @@ using System.Collections.Generic;
 public class HexGridManager : MonoBehaviour 
 {
     // Simple container to remove need for a normal Vector2 for holding grid coordinates
-    public struct IntVector2
+    public class IntVector2
     {
         public int x;
         public int y;
 
-        public IntVector2( ref IntVector2 other ) { x = other.x; y = other.y; }
+        public IntVector2() { x = 0; y = 0; }
+        public IntVector2( IntVector2 other ) { x = other.x; y = other.y; }
         public IntVector2( int _x, int _y ) { x = _x; y = _y; }
-        
+
+        public void Set( IntVector2 other ) { x = other.x; y = other.y; }
         public void Set( int _x, int _y ) { x = _x; y = _y; }
         
-        public bool Equals( ref IntVector2 other )
+        public bool Equals( IntVector2 other )
         {
             return (x == other.x) && (y == other.y);
         }
@@ -44,7 +46,7 @@ public class HexGridManager : MonoBehaviour
         
         private int _id = -1;                                       // Unique ID
         private HexGridManager _manager;                            // Reference to the parent grid manager
-        private HexGridManager.IntVector2 _current;                 // Last known coordinates of this occupant
+        private IntVector2 _current;                                // Last known coordinates of this occupant
         private int _magnitude;                                     // The extent to which this Occupant extends from center
         private int _debugTileCounter = 0;
         
@@ -57,8 +59,14 @@ public class HexGridManager : MonoBehaviour
         
         public InternalOccupant( HexGridManager manager )
         {
+            _current = manager._intVectorPool.GetObject();
             _manager = manager;
             _id = IdCounter++;
+        }
+
+        ~InternalOccupant()
+        {
+            _manager._intVectorPool.ReturnObject( _current );
         }
         
         // Set the magnitude for the occupant
@@ -81,9 +89,10 @@ public class HexGridManager : MonoBehaviour
         }
         
         // Mark the grid with this occupant's new coordinates
-        public void Setup( ref IntVector2 vec )
+        public void Setup( IntVector2 vec )
         {
-            _current = vec;
+            _current.x = vec.x;
+            _current.y = vec.y;
             
             // Stamp this occupant into the grid
             Occupy(false);
@@ -94,16 +103,19 @@ public class HexGridManager : MonoBehaviour
         {
             _debugTileCounter = 0; // More straighforward counter for which tile is being updated within UpdateDebugVisuals
 
-            List< HexGridManager.IntVector2 > actedGrids = new List<HexGridManager.IntVector2>();
+            List< IntVector2 > actedGrids = new List<IntVector2>();
 
-            Stack< HexGridManager.IntVector2 > neighbors = new Stack< HexGridManager.IntVector2 >();
-            neighbors.Push(new HexGridManager.IntVector2(ref _current));
+            Stack< IntVector2 > neighbors = new Stack< IntVector2 >();
+
+            IntVector2 first = _manager._intVectorPool.GetObject();
+            first.Set(_current);
+            neighbors.Push(first);
 
             int magnitudeCounter = 0;
             while( neighbors.Count > 0 )
             {
-                HexGridManager.IntVector2 coord = neighbors.Pop();
-                int sig = _manager.GetGridSig( ref coord );
+                IntVector2 coord = neighbors.Pop();
+                int sig = _manager.GetGridSig( coord );
 
                 if( remove ) 
                 {
@@ -116,19 +128,19 @@ public class HexGridManager : MonoBehaviour
 
                 actedGrids.Add( coord );
                 
-                UpdateDebugVisuals( remove, ref coord );
+                UpdateDebugVisuals( remove, coord );
 
                 if( neighbors.Count == 0 && magnitudeCounter < _magnitude )
                 {
                     for( int k = 0; k < actedGrids.Count; k++ )
                     {
-                        HexGridManager.IntVector2 acted = actedGrids[ k ];
-                        for( int i = 0; i < HexGridManager.neighborVectors.Length; i++ )
+                        IntVector2 acted = actedGrids[ k ];
+                        for( int i = 0; i < neighborVectors.Length; i++ )
                         {
-                            HexGridManager.IntVector2 neighbor = 
-                                new HexGridManager.IntVector2( acted.x + HexGridManager.neighborVectors[ i ].x,
-                                                              acted.y + HexGridManager.neighborVectors[ i ].y );
-                            if( _manager.IsValid( ref neighbor ) && !neighbors.Contains( neighbor ) )
+                            IntVector2 neighbor = _manager._intVectorPool.GetObject();
+                            neighbor.Set( acted.x + neighborVectors[ i ].x,
+                                          acted.y + neighborVectors[ i ].y );
+                            if( _manager.IsValid( neighbor ) && !neighbors.Contains( neighbor ) )
                             {
                                 neighbors.Push( neighbor );
                             }
@@ -138,6 +150,14 @@ public class HexGridManager : MonoBehaviour
                     magnitudeCounter++;
                 }
             }
+
+            foreach (IntVector2 v in actedGrids)
+            {
+                _manager._intVectorPool.ReturnObject( v );
+            }
+            actedGrids.Clear();
+
+            _manager._intVectorPool.PrintStats();
         }
         
         private void AddFootprintToGrid( int sig )
@@ -171,7 +191,7 @@ public class HexGridManager : MonoBehaviour
             }
         }
         
-        private void UpdateDebugVisuals( bool remove, ref HexGridManager.IntVector2 vec )
+        private void UpdateDebugVisuals( bool remove, IntVector2 vec )
         {
             if( !remove && _manager._showDebug && _manager.occupiedTilePrefab != null )
             {
@@ -182,7 +202,7 @@ public class HexGridManager : MonoBehaviour
                     debugVisuals.Add( newVisual );
                 }
                 Vector3 pos = Vector3.zero;
-                _manager.GridToPosition( ref vec, ref pos );
+                _manager.GridToPosition( vec, ref pos );
                 debugVisuals[ _debugTileCounter ].transform.position = pos + (Vector3.up * 0.002f);
                 
                 _debugTileCounter++;
@@ -191,13 +211,14 @@ public class HexGridManager : MonoBehaviour
     }
     
     // Simple class to support templated object pooling
-    private class GenericPool<T> {
+    protected class GenericPool<T> {
         private Stack< T > _pool = new Stack< T >();
         
         public delegate T CreateObject();
         
         private CreateObject _func = null;
-        
+
+        private int _outstanding = 0;
         public GenericPool( CreateObject func )
         {
             _func = func;
@@ -219,13 +240,21 @@ public class HexGridManager : MonoBehaviour
             {
                 obj = _func();
             }
+
+            _outstanding++;
             
             return obj;
         }
         
         public void ReturnObject( T obj )
         {
+            _outstanding--;
             _pool.Push(obj);
+        }
+
+        public void PrintStats()
+        {
+            Debug.Log("GenericPool stats: " + _pool.Count + " in queue, " + _outstanding + " outstanding");
         }
     };
     
@@ -252,6 +281,7 @@ public class HexGridManager : MonoBehaviour
     
     private GenericPool< List< int > > _intListPool = null;
     private GenericPool< InternalOccupant > _occupantPool = null;
+    protected GenericPool< IntVector2 > _intVectorPool = null;
 
     public static readonly IntVector2[] neighborVectors = new IntVector2[6] {
         new IntVector2( +1,  0 ),
@@ -266,6 +296,7 @@ public class HexGridManager : MonoBehaviour
     public HexGridManager () {
         _intListPool = new GenericPool< List< int > >(CreateNewList);
         _occupantPool = new GenericPool< InternalOccupant >(CreateNewOccupant);
+        _intVectorPool = new GenericPool<IntVector2>(CreateNewIntVector);
     }
     
     List< int > CreateNewList()
@@ -276,6 +307,11 @@ public class HexGridManager : MonoBehaviour
     InternalOccupant CreateNewOccupant()
     {
         return new InternalOccupant(this);
+    }
+
+    IntVector2 CreateNewIntVector()
+    {
+        return new IntVector2();
     }
     
     public void Awake()
@@ -303,11 +339,11 @@ public class HexGridManager : MonoBehaviour
                 foreach (int sig in validGrids)
                 {
                     
-                    SigToGrid(sig, ref _tmpGrid);
+                    SigToGrid(sig, _tmpGrid);
 
                     GameObject o = Instantiate(vacantTilePrefab) as GameObject;
                     Vector3 pos = Vector3.zero;
-                    GridToPosition( ref _tmpGrid, ref pos );
+                    GridToPosition( _tmpGrid, ref pos );
                     o.transform.position = pos + ( Vector3.up * 0.001f );
                     _debugVisuals.Add(o);
                 }
@@ -352,17 +388,17 @@ public class HexGridManager : MonoBehaviour
         _debugVisuals.Clear();
     }
     
-    public bool IsValid( ref IntVector2 vec )
+    public bool IsValid( IntVector2 vec )
     {
-        int sig = GetGridSig(ref vec);
+        int sig = GetGridSig(vec);
         
         return (validGrids.BinarySearch(sig) > -1);
     }
     
-    public bool IsOccupied( ref IntVector2 vec, Reservation optionalFilter = null )
+    public bool IsOccupied( IntVector2 vec, Reservation optionalFilter = null )
     {
         List< int > occupants = null;
-        bool exists = _occupantBuckets.TryGetValue(GetGridSig(ref vec), out occupants);
+        bool exists = _occupantBuckets.TryGetValue(GetGridSig(vec), out occupants);
         
         if( optionalFilter == null || !exists )
         {
@@ -373,20 +409,20 @@ public class HexGridManager : MonoBehaviour
         return !occupants.Contains(occupant.ID);
     }
     
-    private int GetGridSig( ref IntVector2 vec )
+    private int GetGridSig( IntVector2 vec )
     {
         return ( vec.x + ( _gridRowMaxHalf ) ) + 
             ( ( vec.y + ( _gridRowMaxHalf ) ) << _exponent);
     }
     
-    private void SigToGrid( int sig, ref IntVector2 vec )
+    private void SigToGrid( int sig, IntVector2 vec )
     {
         vec.x = ( sig % GridRowMax ) - ( _gridRowMaxHalf );
         sig >>= _exponent;
         vec.y = ( sig % GridRowMax ) - ( _gridRowMaxHalf );
     }
     
-    public void PositionToGrid( Vector3 pos, ref IntVector2 grid )
+    public void PositionToGrid( Vector3 pos, IntVector2 grid )
     {
         float g = (float)GridSize;
 
@@ -416,7 +452,7 @@ public class HexGridManager : MonoBehaviour
         grid.y = Mathf.RoundToInt( r );
     }
     
-    public void GridToPosition( ref IntVector2 grid, ref Vector3 pos )
+    public void GridToPosition( IntVector2 grid, ref Vector3 pos )
     {
         float x = (float)grid.x;
         float y = (float)grid.y;
@@ -427,14 +463,16 @@ public class HexGridManager : MonoBehaviour
         pos.z = g * (3.0f / 2.0f) * y;
     }
 
-    public IntVector2 GetClosestVacantNeighbor( GameObject dest, GameObject src = null )
+    public void GetClosestVacantNeighbor( GameObject dest, ref IntVector2 closestNeighbor, GameObject src = null )
     {
-        IntVector2 occupantCurrent = new IntVector2();
-        PositionToGrid(dest.transform.position, ref occupantCurrent);
+        IntVector2 occupantCurrent = _intVectorPool.GetObject();
+        PositionToGrid(dest.transform.position, occupantCurrent);
 
-        if (!IsOccupied(ref occupantCurrent))
+        if (!IsOccupied(occupantCurrent))
         {
-            return occupantCurrent;
+            closestNeighbor.Set( occupantCurrent );
+            _intVectorPool.ReturnObject( occupantCurrent );
+            return;
         }
 
         List< int > actedSigs = new List< int >();
@@ -447,13 +485,13 @@ public class HexGridManager : MonoBehaviour
         while ( neighbors.Count > 0 )
         {
             IntVector2 coord = neighbors.Pop();
-            int sig = GetGridSig( ref coord );
+            int sig = GetGridSig( coord );
             if( !actedSigs.Contains( sig ) )
             {
                 actedSigs.Add( sig );
             }
 
-            if( !IsOccupied( ref coord ) )
+            if( !IsOccupied( coord ) )
             {
                 unoccupiedNeighbors.Add( coord );
             }
@@ -466,14 +504,14 @@ public class HexGridManager : MonoBehaviour
                     {
                         int neighborSig = actedSigs[k];
                         IntVector2 acted = new IntVector2();
-                        SigToGrid( neighborSig, ref acted );
+                        SigToGrid( neighborSig, acted );
 
                         for( int i = 0; i < neighborVectors.Length; i++ )
                         {
                             IntVector2 neighbor = 
                                 new IntVector2( acted.x + neighborVectors[ i ].x,
                                                 acted.y + neighborVectors[ i ].y );
-                            if( IsValid( ref neighbor ) && !neighbors.Contains( neighbor ) && !actedSigs.Contains( GetGridSig( ref neighbor ) ) )
+                            if( IsValid( neighbor ) && !neighbors.Contains( neighbor ) && !actedSigs.Contains( GetGridSig( neighbor ) ) )
                             {
                                 neighbors.Push( neighbor );
                             }
@@ -483,7 +521,7 @@ public class HexGridManager : MonoBehaviour
             }
         }
 
-        IntVector2 nearest = new IntVector2();
+        IntVector2 nearest = _intVectorPool.GetObject();
         if (unoccupiedNeighbors.Count > 0)
         {
             // Now that we have a list of unoccupied neighbors, find the one closest to who is asking
@@ -492,7 +530,7 @@ public class HexGridManager : MonoBehaviour
                 nearest = unoccupiedNeighbors [0];
             } else {
                 IntVector2 askingObjectGrid = new IntVector2();
-                PositionToGrid( src.transform.position, ref askingObjectGrid );
+                PositionToGrid( src.transform.position, askingObjectGrid );
 
 
                 float lastMag = float.MaxValue;
@@ -500,7 +538,7 @@ public class HexGridManager : MonoBehaviour
                 {
                     IntVector2 neighborVec = neighbor;
                     Vector3 neighborPos = Vector3.zero;
-                    GridToPosition( ref neighborVec, ref neighborPos );
+                    GridToPosition( neighborVec, ref neighborPos );
                     float diffMag = ( neighborPos - src.transform.position).sqrMagnitude;
                     if( diffMag < lastMag )
                     {
@@ -511,7 +549,8 @@ public class HexGridManager : MonoBehaviour
             }
         }
 
-        return nearest;
+        closestNeighbor.Set( nearest );
+        _intVectorPool.ReturnObject( nearest );
     }
     
     #region Occupants
@@ -525,10 +564,10 @@ public class HexGridManager : MonoBehaviour
     {
         InternalOccupant occupant = (InternalOccupant)occ;
         
-        PositionToGrid(thing.transform.position, ref _tmpGrid);
+        PositionToGrid(thing.transform.position, _tmpGrid);
         
         occupant.Occupy(true);
-        occupant.Setup( ref _tmpGrid );
+        occupant.Setup( _tmpGrid );
     }
     
     public void ReturnOccupant( ref Occupant occ )
@@ -555,10 +594,10 @@ public class HexGridManager : MonoBehaviour
     {
         InternalOccupant o = _occupantPool.GetObject();
         
-        PositionToGrid(pos, ref _tmpGrid);
+        PositionToGrid(pos, _tmpGrid);
         
         o.SetMagnitude(magnitude);
-        o.Setup(ref _tmpGrid);
+        o.Setup(_tmpGrid);
         
         _occupants.Add(o);
         
@@ -596,7 +635,7 @@ public class HexGridManager : MonoBehaviour
         
         // Start it off
         _tmpGrid.Set(0, 0);
-        neighborsToTry.Push(GetGridSig(ref _tmpGrid));
+        neighborsToTry.Push(GetGridSig(_tmpGrid));
         
         int sig = 0;
         
@@ -608,11 +647,11 @@ public class HexGridManager : MonoBehaviour
             maxStackSize = Mathf.Max( maxStackSize, neighborsToTry.Count );
             
             sig = neighborsToTry.Pop();
-            SigToGrid( sig, ref _tmpGrid );
+            SigToGrid( sig, _tmpGrid );
 
             triedValues.Add( sig, true );
             
-            GridToPosition( ref _tmpGrid, ref pos );
+            GridToPosition( _tmpGrid, ref pos );
             if (NavMesh.SamplePosition(pos, out hit, GridSize, -1))
             {
                 validGrids.Add(sig);
@@ -622,7 +661,7 @@ public class HexGridManager : MonoBehaviour
                     IntVector2 neighborDir = HexGridManager.neighborVectors[ i ];
                     
                     tmpGrid2.Set( neighborDir.x + _tmpGrid.x, neighborDir.y + _tmpGrid.y );
-                    int nextSig = GetGridSig(ref tmpGrid2);
+                    int nextSig = GetGridSig(tmpGrid2);
                     if (!triedValues.TryGetValue(nextSig, out b) && !neighborsToTry.Contains(nextSig))
                     {
                         neighborsToTry.Push(nextSig);
@@ -633,6 +672,12 @@ public class HexGridManager : MonoBehaviour
         
         // Sort so we can bsearch it
         validGrids.Sort();
+
+        if (validGrids.Count == 0)
+        {
+            Debug.LogError("Unable to find any possible grid units in this scene. Make sure you have baked a nav mesh, and that the nav mesh includes the world origin (0,0)");
+            return;
+        }
         
         Debug.Log("Found valid squares: " + validGrids.Count);
         Debug.Log("Max stack size during search: " + maxStackSize);
