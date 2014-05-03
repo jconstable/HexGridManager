@@ -1,4 +1,24 @@
-﻿using UnityEngine;
+﻿// Copyright 2014 John Constable
+//
+// This is a component intended to be used within a Unity project. It creates and stores a map of
+// heagonal grid square, and provides various functions such as validitiy testing, collision testing,
+// and vacant neighbor searching. It is intended to be used in collaboration with Unity's built-in
+// pathfinding/navmesh solution, although there are no true dependendencies. 
+//
+// TODO: Distance testing, find best path
+//        
+// HexGridManager is free software: you can redistribute it and/or modify it under the terms of the GNU General 
+// Public License as published by the Free Software Foundation, either version 3 of the License, or (at 
+// your option) any later version.
+//        
+// HexGridManager is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even 
+// the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+// GNU General Public License for more details.
+//    
+// You should have received a copy of the GNU General Public License along with Foobar. If not, 
+// see http://www.gnu.org/licenses/.
+
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -23,21 +43,23 @@ public class HexGridManager : MonoBehaviour
     // The length in squares of one side of the entire possible grid space
     public int GridRowMax = 1024;
 
-    public bool _showDebug = false;
+    // Triggers debug display, if prefabs are also present
+    public bool ShowDebug = false;
 
-    public GameObject vacantTilePrefab = null;
-    public GameObject occupiedTilePrefab = null;
+    public GameObject VacantTilePrefab = null;
+    public GameObject OccupiedTilePrefab = null;
 
     // Leave as public so they will be serialized in the editor
     public List<int> validGrids = new List< int >();
 
+    // Keep track of who is overlapping which grids
     protected Dictionary< int, List< int > > _occupantBuckets = new Dictionary<int, List< int > >();
 
     private List< InternalOccupant > _occupants = new List<InternalOccupant>();
     private List< GameObject > _debugVisuals = new List<GameObject>();
 
-    private int _exponent = 0;
-    private int _gridRowMaxHalf = 0;
+    private int _exponent = 0;       // Figure out what exponent to use for unpacking sigs
+    private int _gridRowMaxHalf = 0; // Cached for optmization
 
     private GenericPool< List< int > > _intListPool = null;
     private GenericPool< InternalOccupant > _occupantPool = null;
@@ -47,7 +69,7 @@ public class HexGridManager : MonoBehaviour
     public HexGridManager () {
         _intListPool = new GenericPool< List< int > >(CreateNewList);
         _occupantPool = new GenericPool< InternalOccupant >(CreateNewOccupant);
-        _intVectorPool = new GenericPool<IntVector2>(CreateNewIntVector);
+        _intVectorPool = new GenericPool< IntVector2 >(CreateNewIntVector);
     }
 
     public void Awake()
@@ -64,22 +86,6 @@ public class HexGridManager : MonoBehaviour
     {
         return IsOccupied(GetGridSig(vec), optionalFilter);
     }
-    
-    public bool IsOccupied( int sig, Reservation optionalFilter = null )
-    {
-        List< int > occupants = null;
-        bool exists = _occupantBuckets.TryGetValue(sig, out occupants);
-        
-        if( optionalFilter == null || !exists )
-        {
-            return exists;
-        }
-        
-        InternalOccupant occupant = optionalFilter as InternalOccupant;
-        return !occupants.Contains(occupant.ID);
-    }
-
-
 
     public void PositionToGrid( Vector3 pos, ref Vector3 grid )
     {
@@ -142,6 +148,7 @@ public class HexGridManager : MonoBehaviour
             
             if( neighborSigs.Count == 0 )
             {
+                // If we already found some unoccupied neighbors, we can stop early
                 if( unoccupiedNeighbors.Count == 0 )
                 {
                     PushNewMagnitudeOfNeighborsIntoStack( actedSigs, neighborSigs );
@@ -212,6 +219,12 @@ public class HexGridManager : MonoBehaviour
     }
     #endregion
 
+
+
+
+
+
+
     #region Private
     private List< int > CreateNewList()
     {
@@ -245,6 +258,7 @@ public class HexGridManager : MonoBehaviour
         IntVector2 grid = _intVectorPool.GetObject();
         foreach (InternalOccupant occupant in _occupants)
         {
+            // Only update tracking for occupants that have GameObjects
             if( occupant.TrackedGameObject != null )
             {
                 PositionToGrid(occupant.TrackedGameObject.transform.position, grid);
@@ -289,7 +303,7 @@ public class HexGridManager : MonoBehaviour
 
     private void ToggleDebugVisuals()
     {
-        if (_showDebug && vacantTilePrefab != null && _debugVisuals.Count == 0)
+        if( ShowDebug && VacantTilePrefab != null && _debugVisuals.Count == 0)
         {
             IntVector2 grid = _intVectorPool.GetObject();
             foreach (int sig in validGrids)
@@ -297,7 +311,7 @@ public class HexGridManager : MonoBehaviour
                 
                 SigToGrid(sig, grid);
                 
-                GameObject o = Instantiate(vacantTilePrefab) as GameObject;
+                GameObject o = Instantiate(VacantTilePrefab) as GameObject;
                 Vector3 pos = Vector3.zero;
                 GridToPosition( grid.x, grid.y, ref pos );
                 o.transform.position = pos + ( Vector3.up * 0.001f );
@@ -307,7 +321,7 @@ public class HexGridManager : MonoBehaviour
             _intVectorPool.ReturnObject(grid);
         }
         
-        if (!_showDebug && _debugVisuals.Count > 0)
+        if (!ShowDebug && _debugVisuals.Count > 0)
         {
             DestroyVisuals();
             foreach (InternalOccupant occ in _occupants)
@@ -338,6 +352,20 @@ public class HexGridManager : MonoBehaviour
         
         grid.x = Mathf.RoundToInt( q );
         grid.y = Mathf.RoundToInt( r );
+    }
+
+    private bool IsOccupied( int sig, Reservation optionalFilter = null )
+    {
+        List< int > occupants = null;
+        bool exists = _occupantBuckets.TryGetValue(sig, out occupants);
+        
+        if( optionalFilter == null || !exists )
+        {
+            return exists;
+        }
+        
+        InternalOccupant occupant = optionalFilter as InternalOccupant;
+        return !occupants.Contains(occupant.ID);
     }
     
     private int GetGridSig( Vector3 vec )
@@ -660,12 +688,12 @@ public class HexGridManager : MonoBehaviour
         
         private void UpdateDebugVisuals( bool remove, int sig )
         {
-            if( !remove && _manager._showDebug && _manager.occupiedTilePrefab != null )
+            if( !remove && _manager.ShowDebug && _manager.OccupiedTilePrefab != null )
             {
                 // Attempt to reuse a grid
                 if( _debugTileCounter >= debugVisuals.Count )
                 {
-                    GameObject newVisual = Instantiate( _manager.occupiedTilePrefab ) as GameObject;
+                    GameObject newVisual = Instantiate( _manager.OccupiedTilePrefab ) as GameObject;
                     newVisual.transform.parent = _manager.transform;
                     debugVisuals.Add( newVisual );
                 }
