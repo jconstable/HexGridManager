@@ -48,7 +48,9 @@ What's here?
 A ready-to-use UnityPackage.
 
 Also, this repo contains a sample project with the source code and two scenes: 
+
 1) RandomMovement - a basic demo of many navigating GameObjects and what the grid map looks like as they path around
+
 2) Swarming - a target GameObject is swarmed by many other objects.
 
 
