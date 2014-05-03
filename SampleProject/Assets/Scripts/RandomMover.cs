@@ -26,8 +26,8 @@ public class RandomMover : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 
-        float mag = _navAgent.velocity.magnitude;
-        if ( mag == 0f && roam )
+        float mag = _navAgent.velocity.sqrMagnitude;
+        if ( mag < 0.001f && roam )
         {
             GetNewDestination();
         } 
