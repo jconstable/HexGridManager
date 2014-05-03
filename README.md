@@ -39,6 +39,12 @@ This repo contains a sample project with two scenes:
 
 A ready-to-use UnityPackage has also been provided.
 
+Special thanks to this blog post by Red Blob Games for execellent hex math:
+http://www.redblobgames.com/grids/hexagons/
+
+And to Baran Kahyaoglu for sample code to generate hex meshes on the fly (for debug visuals)
+http://www.barankahyaoglu.com/blog/post/2013/07/26/Hexagons-in-Unity.aspx
+
 TODO:
 - Functions to return grid distance between two points
 - Function to return best possible grid paths between two points
