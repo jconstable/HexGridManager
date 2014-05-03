@@ -12,7 +12,9 @@ behavior, you have three options:
 
 1) Increase the NavAgent radius, which will slow the game down and create strange behavior if destinations
     are too close to one another
+    
 2) Reduce the NavAgent radius and have objects end up stacking on top of each other
+
 3) Use another pathfinding solution, which is probably written in C# and not as fast as Unity's C++ solution
 
 
