@@ -39,7 +39,7 @@ the GameObject's position to a logical hex grid on the NavMesh. The Occupant can
 If a GameObject would like to path to a location next to another GameObject, the HexGridManager can be queried for a
 vacant neighboring hex, which could be used as the NavAgent's destination.
 
-Whenever an Occupant detects that its GameObject has moved to a new grid hexe, the GameObject is sent the 
+Whenever an Occupant detects that its GameObject has moved to a new grid hex, the GameObject is sent the 
 "OnGridChanged" message, allowing it to take action.
 
 
