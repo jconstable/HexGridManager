@@ -14,20 +14,12 @@
 //        
 // HexGridManager is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even 
 // the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-// GNU General Public License for more details.
-//    
-// You should have received a copy of the GNU General Public License along with Foobar. If not, 
-// see http://www.gnu.org/licenses/.
+// GNU General Public License for more details. http://www.gnu.org/licenses/.
 
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
-// Execute in edit mode to enable the rebuild checkbox
-[ExecuteInEditMode]
 public class HexGridManager : MonoBehaviour 
 {
     protected static readonly IntVector2[] neighborVectors = new IntVector2[6] {
@@ -284,10 +276,7 @@ public class HexGridManager : MonoBehaviour
             }
         }
 
-        if (Application.isPlaying)
-        {
-            ToggleDebugVisuals();
-        }
+        ToggleDebugVisuals();
     }
 
     // Rebuild the hex grids from the NavMesh (not recommended at runtime)
