@@ -30,12 +30,11 @@ top of each other.
 
 How to use this:
 
-The size of the hex unit is configurable, and the hex map can (and should) be pre-baked into the scene, avoding the 
+The size of the hex unit is configurable, and the hex map can (and should) be pre-baked into the scene, avoiding the 
 cost at runtime.
 
 The basic concept is that for any given GameObject, you can create an Occupant within the manager. The occupant maps 
-the GameObject's position to a logical hex grid in the map. The Occupant can be given a radius, in order to occupy
-an area on the map that is greater than one hex.
+the GameObject's position to a logical hex grid on the NavMesh. The Occupant can also be given a radius, in order to occupy an area on the map that is greater than one hex.
 
 If a GameObject would like to path to a location next to another GameObject, the HexGridManager can be queried for a
 vacant neighboring hex, which could be used as the NavAgent's destination.
