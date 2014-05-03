@@ -8,7 +8,7 @@ public class RandomMover : MonoBehaviour {
     private HexGridManager _gridManager = null;
     private NavMeshAgent _navAgent = null;
     private HexGridManager.Occupant _occupant = null;
-    private HexGridManager.IntVector2 tempGrid = new HexGridManager.IntVector2();
+    private Vector3 tempGrid = Vector3.zero;
 
 	// Use this for initialization
 	void Start () {
@@ -43,7 +43,7 @@ public class RandomMover : MonoBehaviour {
 
     void GetNewDestination()
     {
-        tempGrid.Set(Random.Range(-70, 70), Random.Range(-70, 70));
+        tempGrid.Set(Random.Range(-70, 70), 0, Random.Range(-70, 70));
         
         if (_gridManager.IsValid(tempGrid) && !_gridManager.IsOccupied(tempGrid))
         {

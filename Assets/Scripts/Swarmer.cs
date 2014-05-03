@@ -12,8 +12,8 @@ public class Swarmer : MonoBehaviour {
     private HexGridManager.Occupant _occupant = null;
     private HexGridManager.Reservation _reservation = null;
 	
-    HexGridManager.IntVector2 currentGrid = new HexGridManager.IntVector2();
-    HexGridManager.IntVector2 tempGrid = new HexGridManager.IntVector2();
+    private Vector3 currentGrid = Vector3.zero;
+    private Vector3 tempGrid = Vector3.zero;
 	
 	// Use this for initialization
 	void Start () {
@@ -27,7 +27,7 @@ public class Swarmer : MonoBehaviour {
 
 		_occupant = _gridContainer.CreateOccupant(gameObject, 1);
 		
-		_gridContainer.PositionToGrid(transform.position, currentGrid);
+		_gridContainer.PositionToGrid(transform.position, ref currentGrid);
 	}
 	
 	void OnDestroy() 
@@ -38,7 +38,7 @@ public class Swarmer : MonoBehaviour {
 	
 	void FindSwarmDestination()
 	{
-        _gridContainer.GetClosestVacantNeighbor(_target.gameObject, tempGrid, gameObject);
+        _gridContainer.GetClosestVacantNeighbor(_target.gameObject, ref tempGrid, gameObject);
         Vector3 destination = Vector3.zero;
         _gridContainer.GridToPosition(tempGrid, ref destination);
 

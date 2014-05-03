@@ -6,198 +6,7 @@ using System.Collections.Generic;
 [ExecuteInEditMode]
 public class SquareGridManager : MonoBehaviour 
 {
-    // Simple container to remove need for a normal Vector2 for holding grid coordinates
-    public struct IntVector2
-    {
-        public int x;
-        public int y;
-
-        public void Set( int _x, int _y ) { x = _x; y = _y; }
-
-        public bool Equals( ref IntVector2 other )
-        {
-            return (x == other.x) && (y == other.y);
-        }
-    }
-
-    // Public interface to allow users of this class to reference their Occupants without 
-    // access to the implementation
-    public interface Occupant {
-    }
-
-	public interface Reservation {
-	}
-
-    // Class that ecapsulates a 2D region of occupied grid squares
-    protected class InternalOccupant : Occupant, Reservation
-    {
-        // Static to uniquely identify every Occupant that is created
-        private static int IdCounter = 0;
-
-        private int _id = -1;                                       // Unique ID
-        private SquareGridManager _manager;                               // Reference to the parent grid manager
-        private SquareGridManager.IntVector2 _current;                    // Last known coordinates of this occupant
-        private int _magnitude;                                     // The extent to which this Occupant extends from center
-        private int _debugTileCounter = 0;
-
-        // List to hold debug visual currently used by this Occupant
-        private List< GameObject > debugVisuals = new List<GameObject>();
-
-        // Getter for the occupant ID
-        public int ID { get { return _id; } }
-
-        public InternalOccupant( SquareGridManager manager )
-        {
-            _manager = manager;
-            _id = IdCounter++;
-        }
-
-        // Set the magnitude for the occupant
-        public void SetMagnitude( int magnitude )
-        {
-            _magnitude = magnitude;
-
-            DestroyVisuals();
-        }
-
-        public void DestroyVisuals()
-        {
-            foreach (GameObject o in debugVisuals)
-            {
-                Destroy(o);
-            }
-            
-            debugVisuals.Clear();
-            _debugTileCounter = 0;
-        }
-
-        // Mark the grid with this occupant's new coordinates
-        public void Setup( IntVector2 vec )
-        {
-            _current = vec;
-
-            // Stamp this occupant into the grid
-            Occupy(false);
-        }
-
-        // Add or remove this occupants area to the grid
-        public void Occupy( bool remove )
-        {
-            _debugTileCounter = 0; // More straighforward counter for which tile is being updated within UpdateDebugVisuals
-            SquareGridManager.IntVector2 temp = new SquareGridManager.IntVector2();
-
-            // For each row in this occupant's area
-            for( int i = -_magnitude; i <= _magnitude; i++ )
-            {
-                // For each column in this occupant's area
-                for( int j = -_magnitude; j <= _magnitude; j++ )
-                {
-                    temp.Set( _current.x + i, _current.y + j );
-                    int sig = _manager.GetGridSig( ref temp );
-
-                    if( remove ) 
-                    {
-                        RemoveFootprintFromGrid( sig );
-                    }
-                    else 
-                    {
-                        AddFootprintToGrid( sig );
-                    }
-
-                    UpdateDebugVisuals( remove, ref temp );
-                }
-            }
-        }
-
-        private void AddFootprintToGrid( int sig )
-        {
-            List< int > bucket = null;
-            if( _manager._occupantBuckets.TryGetValue( sig, out bucket ) )
-            {
-                if( !bucket.Contains( _id ) )
-                {
-                    bucket.Add( _id );
-                }
-            } else {
-                bucket = _manager._intListPool.GetObject();
-                bucket.Add( _id );
-                _manager._occupantBuckets.Add( sig, bucket );
-            }
-        }
-
-        private void RemoveFootprintFromGrid( int sig )
-        {
-            List< int > bucket = null;
-            if( _manager._occupantBuckets.TryGetValue( sig, out bucket ) )
-            {
-                bucket.Remove( _id );
-                
-                if( bucket.Count == 0 )
-                {
-                    _manager._intListPool.ReturnObject( bucket );
-                    _manager._occupantBuckets.Remove( sig );
-                }
-            }
-        }
-
-        private void UpdateDebugVisuals( bool remove, ref SquareGridManager.IntVector2 vec )
-        {
-            if( !remove && _manager._showDebug && _manager.occupiedTilePrefab != null )
-            {
-                // Attempt to reuse a grid
-                if( _debugTileCounter >= debugVisuals.Count )
-                {
-                    GameObject newVisual = Instantiate( _manager.occupiedTilePrefab ) as GameObject;
-                    newVisual.transform.localScale = new Vector3( _manager.GridSize, _manager.GridSize, 1f );
-                    debugVisuals.Add( newVisual );
-                }
-                Vector3 pos = Vector3.zero;
-                _manager.GridToPosition( ref vec, ref pos );
-                debugVisuals[ _debugTileCounter ].transform.position = pos + (Vector3.up * 0.002f);
-                
-                _debugTileCounter++;
-            }
-        }
-    }
-
-    // Simple class to support templated object pooling
-    private class GenericPool<T> {
-        private Stack< T > _pool = new Stack< T >();
-        
-        public delegate T CreateObject();
-        
-        private CreateObject _func = null;
-
-        public GenericPool( CreateObject func )
-        {
-            _func = func;
-        }
-
-        ~GenericPool()
-        {
-            _pool.Clear();
-        }
-
-        public T GetObject()
-        {
-            T obj = default(T);
-
-            if (_pool.Count > 0)
-            {
-                obj = _pool.Pop();
-            } else
-            {
-                obj = _func();
-            }
-
-            return obj;
-        }
-
-        public void ReturnObject( T obj )
-        {
-            _pool.Push(obj);
-        }
-    };
+    
 
     // Inspector checkbox to trigger rebuilding of tiles
     public bool Rebuild = false;
@@ -495,4 +304,199 @@ public class SquareGridManager : MonoBehaviour
         Debug.Log("Max stack size during search: " + maxStackSize);
     }
 #endif
+#region InnerClasses
+
+	// Simple container to remove need for a normal Vector2 for holding grid coordinates
+	public struct IntVector2
+	{
+		public int x;
+		public int y;
+		
+		public void Set( int _x, int _y ) { x = _x; y = _y; }
+		
+		public bool Equals( ref IntVector2 other )
+		{
+			return (x == other.x) && (y == other.y);
+		}
+	}
+	
+	// Public interface to allow users of this class to reference their Occupants without 
+	// access to the implementation
+	public interface Occupant {
+	}
+	
+	public interface Reservation {
+	}
+	
+	// Class that ecapsulates a 2D region of occupied grid squares
+	protected class InternalOccupant : Occupant, Reservation
+	{
+		// Static to uniquely identify every Occupant that is created
+		private static int IdCounter = 0;
+		
+		private int _id = -1;                                       // Unique ID
+		private SquareGridManager _manager;                               // Reference to the parent grid manager
+		private SquareGridManager.IntVector2 _current;                    // Last known coordinates of this occupant
+		private int _magnitude;                                     // The extent to which this Occupant extends from center
+		private int _debugTileCounter = 0;
+		
+		// List to hold debug visual currently used by this Occupant
+		private List< GameObject > debugVisuals = new List<GameObject>();
+		
+		// Getter for the occupant ID
+		public int ID { get { return _id; } }
+		
+		public InternalOccupant( SquareGridManager manager )
+		{
+			_manager = manager;
+			_id = IdCounter++;
+		}
+		
+		// Set the magnitude for the occupant
+		public void SetMagnitude( int magnitude )
+		{
+			_magnitude = magnitude;
+			
+			DestroyVisuals();
+		}
+		
+		public void DestroyVisuals()
+		{
+			foreach (GameObject o in debugVisuals)
+			{
+				Destroy(o);
+			}
+			
+			debugVisuals.Clear();
+			_debugTileCounter = 0;
+		}
+		
+		// Mark the grid with this occupant's new coordinates
+		public void Setup( IntVector2 vec )
+		{
+			_current = vec;
+			
+			// Stamp this occupant into the grid
+			Occupy(false);
+		}
+		
+		// Add or remove this occupants area to the grid
+		public void Occupy( bool remove )
+		{
+			_debugTileCounter = 0; // More straighforward counter for which tile is being updated within UpdateDebugVisuals
+			SquareGridManager.IntVector2 temp = new SquareGridManager.IntVector2();
+			
+			// For each row in this occupant's area
+			for( int i = -_magnitude; i <= _magnitude; i++ )
+			{
+				// For each column in this occupant's area
+				for( int j = -_magnitude; j <= _magnitude; j++ )
+				{
+					temp.Set( _current.x + i, _current.y + j );
+					int sig = _manager.GetGridSig( ref temp );
+					
+					if( remove ) 
+					{
+						RemoveFootprintFromGrid( sig );
+					}
+					else 
+					{
+						AddFootprintToGrid( sig );
+					}
+					
+					UpdateDebugVisuals( remove, ref temp );
+				}
+			}
+		}
+		
+		private void AddFootprintToGrid( int sig )
+		{
+			List< int > bucket = null;
+			if( _manager._occupantBuckets.TryGetValue( sig, out bucket ) )
+			{
+				if( !bucket.Contains( _id ) )
+				{
+					bucket.Add( _id );
+				}
+			} else {
+				bucket = _manager._intListPool.GetObject();
+				bucket.Add( _id );
+				_manager._occupantBuckets.Add( sig, bucket );
+			}
+		}
+		
+		private void RemoveFootprintFromGrid( int sig )
+		{
+			List< int > bucket = null;
+			if( _manager._occupantBuckets.TryGetValue( sig, out bucket ) )
+			{
+				bucket.Remove( _id );
+				
+				if( bucket.Count == 0 )
+				{
+					_manager._intListPool.ReturnObject( bucket );
+					_manager._occupantBuckets.Remove( sig );
+				}
+			}
+		}
+		
+		private void UpdateDebugVisuals( bool remove, ref SquareGridManager.IntVector2 vec )
+		{
+			if( !remove && _manager._showDebug && _manager.occupiedTilePrefab != null )
+			{
+				// Attempt to reuse a grid
+				if( _debugTileCounter >= debugVisuals.Count )
+				{
+					GameObject newVisual = Instantiate( _manager.occupiedTilePrefab ) as GameObject;
+					newVisual.transform.localScale = new Vector3( _manager.GridSize, _manager.GridSize, 1f );
+					debugVisuals.Add( newVisual );
+				}
+				Vector3 pos = Vector3.zero;
+				_manager.GridToPosition( ref vec, ref pos );
+				debugVisuals[ _debugTileCounter ].transform.position = pos + (Vector3.up * 0.002f);
+				
+				_debugTileCounter++;
+			}
+		}
+	}
+	
+	// Simple class to support templated object pooling
+	private class GenericPool<T> {
+		private Stack< T > _pool = new Stack< T >();
+		
+		public delegate T CreateObject();
+		
+		private CreateObject _func = null;
+		
+		public GenericPool( CreateObject func )
+		{
+			_func = func;
+		}
+		
+		~GenericPool()
+		{
+			_pool.Clear();
+		}
+		
+		public T GetObject()
+		{
+			T obj = default(T);
+			
+			if (_pool.Count > 0)
+			{
+				obj = _pool.Pop();
+			} else
+			{
+				obj = _func();
+			}
+			
+			return obj;
+		}
+		
+		public void ReturnObject( T obj )
+		{
+			_pool.Push(obj);
+		}
+	};
+#endregion
 }
