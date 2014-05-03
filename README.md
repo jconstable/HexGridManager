@@ -52,7 +52,7 @@ Also, this repo contains a sample project with the source code and two scenes:
 
 
 
-Special thanks to this blog post by Red Blob Games for execellent hex math:
+Special thanks to this blog post by Red Blob Games for excellent hex math:
 http://www.redblobgames.com/grids/hexagons/
 
 And to Baran Kahyaoglu for sample code to generate hex meshes on the fly (for debug visuals)
