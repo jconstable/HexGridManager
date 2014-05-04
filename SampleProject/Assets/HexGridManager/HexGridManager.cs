@@ -36,6 +36,10 @@ public class HexGridManager : MonoBehaviour
     // The length in squares of one side of the entire possible grid space. Must be Power of 2
     public int GridRowMax = 1024;
 
+	// Allow configuration of debug visual Y position, to avoid Z-fighting
+	public float UnoccupiedDebugYPosition = 0.001f;
+	public float OccupiedDebugYPosition = 0.002f;
+
     // Triggers debug display, if prefabs are also present
     public bool ShowDebug = false;
 
@@ -159,7 +163,7 @@ public class HexGridManager : MonoBehaviour
             if (unoccupiedNeighbors.Count > 0)
             {
                 // Now that we have a list of unoccupied neighbors, find the one in the best direction
-                if (dir.sqrMagnitude == 0)
+                if (dir.sqrMagnitude < Mathf.Epsilon)
                 {
                     // Direction doesn't matter
                     SigToGrid(unoccupiedNeighbors [0], nearest);
@@ -270,7 +274,7 @@ public class HexGridManager : MonoBehaviour
                         occupant.Occupy(true);
                         occupant.Update(grid);
                 
-                        occupant.TrackedGameObject.SendMessage("OnGridChanged");
+						occupant.TrackedGameObject.SendMessage( "OnGridChanged", SendMessageOptions.DontRequireReceiver );
                     }
                 }
             }
@@ -313,8 +317,8 @@ public class HexGridManager : MonoBehaviour
                     GameObject o = Instantiate(VacantTilePrefab) as GameObject;
                     Vector3 pos = Vector3.zero;
                     GridToPosition( grid.x, grid.y, ref pos );
-                    o.transform.position = pos + ( Vector3.up * 0.001f );
-                    o.transform.parent = transform;
+					o.transform.position = pos + ( Vector3.up * UnoccupiedDebugYPosition );
+					o.transform.parent = transform;
                     _debugVisuals.Add(o);
                 }
             }
@@ -411,7 +415,7 @@ public class HexGridManager : MonoBehaviour
     private void ReturnInternalOccupant( InternalOccupant occupant )
     {
         _occupants.Remove(occupant);
-        
+
         occupant.DestroyVisuals();
         occupant.Occupy(true);
         occupant.Track(null);
@@ -533,7 +537,7 @@ public class HexGridManager : MonoBehaviour
             neighborsToTry.Push(GetGridSig(grid));
             
             int sig = 0;
-            
+			float minGridSizeForTesting = Mathf.Max( 0.2f, GridSize );
 
             using (IntVector2 tmpGrid2 = _intVectorPool.GetObject())
             {
@@ -547,7 +551,7 @@ public class HexGridManager : MonoBehaviour
                     triedValues.Add(sig, true);
                     
                     GridToPosition(grid.x, grid.y, ref pos);
-                    if (NavMesh.SamplePosition(pos, out hit, GridSize, -1))
+					if (NavMesh.SamplePosition(pos, out hit, minGridSizeForTesting, -1))
                     {
                         validGrids.Add(sig);
 
@@ -774,9 +778,9 @@ public class HexGridManager : MonoBehaviour
                     _manager.SigToGrid( sig, vec );
                     _manager.GridToPosition( vec.x, vec.y, ref pos );
                     
-                    debugVisuals[ _debugTileCounter ].transform.position = pos + (Vector3.up * 0.002f);
-
-                    // Re-use pos
+					debugVisuals[ _debugTileCounter ].transform.position = pos + (Vector3.up * _manager.OccupiedDebugYPosition);
+					
+					// Re-use pos
                     pos.Set( vec.x, 0, vec.y );
                     debugVisuals[ _debugTileCounter ].gameObject.SetActive( _manager.IsValid( pos ) );
                 }

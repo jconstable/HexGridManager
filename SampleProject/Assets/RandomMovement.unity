@@ -781,6 +781,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   GridSize: .25
   GridRowMax: 1024
+  UnoccupiedDebugYPosition: .00100000005
+  OccupiedDebugYPosition: .00200000009
   ShowDebug: 1
   VacantTilePrefab: {fileID: 100000, guid: 220810bebb6713b4696e9df601a6fa17, type: 2}
   OccupiedTilePrefab: {fileID: 100000, guid: 239da92ed069c4c4ba50102e7b83fd21, type: 2}
