@@ -314,6 +314,11 @@ public class HexGridManager : MonoBehaviour
                     SigToGrid(sig, grid);
                     
                     GameObject o = Instantiate(VacantTilePrefab) as GameObject;
+					Hex hex = o.GetComponent< Hex >();
+					if( hex != null )
+					{
+						hex.GridSize = GridSize;
+					}
                     Vector3 pos = Vector3.zero;
                     GridToPosition( grid.x, grid.y, ref pos );
 					o.transform.position = pos + ( Vector3.up * UnoccupiedDebugYPosition );
@@ -769,6 +774,11 @@ public class HexGridManager : MonoBehaviour
                 if( _debugTileCounter >= debugVisuals.Count )
                 {
                     GameObject newVisual = Instantiate( _manager.OccupiedTilePrefab ) as GameObject;
+					Hex hex = newVisual.GetComponent< Hex >();
+					if( hex != null )
+					{
+						hex.GridSize = _manager.GridSize;
+					}
                     newVisual.transform.parent = _manager.transform;
                     debugVisuals.Add( newVisual );
                 }

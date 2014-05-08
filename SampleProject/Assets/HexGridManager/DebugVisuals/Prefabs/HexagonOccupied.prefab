@@ -39,7 +39,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   HexPosition: {x: 0, y: 0}
-  MaterialToUse: {fileID: 2100000, guid: 28a78a782b27dca489519c5b0e5ed84d, type: 2}
+  MaterialToUse: {fileID: 2100000, guid: 99a19bba497b1e34593a4c1e61db3e16, type: 2}
+  GridSize: 1
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

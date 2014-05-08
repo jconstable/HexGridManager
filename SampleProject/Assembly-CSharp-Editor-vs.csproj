@@ -47,7 +47,7 @@
   </ItemGroup>
   <ItemGroup>
      <Compile Include="Assets\HexGridManager\Editor\HexGridManagerEditor.cs" />
-     <None Include="Assets\HexGridManager\DebugVisuals\Shaders\UnlitColorShader.shader" />
+     <None Include="Assets\HexGridManager\DebugVisuals\Shaders\HexShader.shader" />
  <Reference Include="UnityEditor.Graphs">
  <HintPath>C:\Program Files (x86)\Unity\Editor\Data\Managed\UnityEditor.Graphs.dll</HintPath>
  </Reference>
