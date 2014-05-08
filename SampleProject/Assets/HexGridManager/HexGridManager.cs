@@ -177,6 +177,7 @@ public class HexGridManager : MonoBehaviour
             outGrid.Set(nearest.x, 0, nearest.y);
         }
 
+		unoccupiedNeighbors.Clear ();
         _intListPool.ReturnObject(unoccupiedNeighbors);
     }
 
@@ -216,8 +217,6 @@ public class HexGridManager : MonoBehaviour
         reservation = null;
     }
     #endregion
-
-
 
 
 
@@ -504,6 +503,7 @@ public class HexGridManager : MonoBehaviour
             }
         }
 
+		actedSigs.Clear ();
         _intListPool.ReturnObject(actedSigs);
 
         return outUnoccupiedNeighbors;
