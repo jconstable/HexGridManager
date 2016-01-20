@@ -60,7 +60,7 @@ public class Swarmer : MonoBehaviour {
 
     public void OnGridChanged()
     {
-		if( _reservation != null && _gridContainer.IsReserved( tempGrid, _reservation ) )
+        if( _reservation != null && _gridContainer.IsOccupied( tempGrid, _reservation, _occupant ) )
         {
             _gridContainer.ReturnReservation(ref _reservation);
             needsDestination = true;

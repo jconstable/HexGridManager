@@ -100,16 +100,16 @@ public class HexGridManager : MonoBehaviour
 
     // Returns true if the vectory is a hex coordinate that currently has an occupant
     // vec - A grid position, using x and z as the coordinates
-    // optionalFilter (optional) - Do not count the given occupant
-    public bool IsReserved( Vector3 vec, Reservation optionalFilter = null )
+    // params filter (optional) - Do not count the given occupants
+    public bool IsOccupied( Vector3 vec, params object[] filters )
     {
-        return IsOccupied(GetGridSig(vec), optionalFilter as InternalOccupant);
+        return IsOccupied(GetGridSig(vec), filters );
     }
 
-    public bool IsOccupied( Vector3 vec, Occupant optionalFilter = null )
-    {
-        return IsOccupied(GetGridSig(vec), optionalFilter as InternalOccupant);
-    }
+	public bool IsOccupied( Vector3 vec )
+	{
+		return IsOccupied(GetGridSig(vec), null);
+	}
 
     public void GetOccupants( Vector3 vec, List< GameObject > occupantsOut )
     {
@@ -436,8 +436,9 @@ public class HexGridManager : MonoBehaviour
 
 			foreach (InternalOccupant occupant in _occupantsToMessage) 
 			{
-					occupant.TrackedGameObject.SendMessage( "OnGridChanged", SendMessageOptions.DontRequireReceiver );
+				occupant.TrackedGameObject.SendMessage( "OnGridChanged", SendMessageOptions.DontRequireReceiver );
 			}
+			_occupantsToMessage.Clear ();
         }
 
         ToggleDebugVisuals();
@@ -521,7 +522,7 @@ public class HexGridManager : MonoBehaviour
         }
     }
 
-    private bool IsOccupied( int sig, InternalOccupant optionalFilter = null )
+    private bool IsOccupied( int sig, params object[] filters )
     {
         List< int > occupants = null;
         bool exists = _occupantBuckets.TryGetValue(sig, out occupants);
@@ -532,9 +533,11 @@ public class HexGridManager : MonoBehaviour
         }
 
         int numOccupants = occupants.Count;
-        if( optionalFilter != null && occupants.Contains( optionalFilter.ID ) )
-        {
-            numOccupants--;
+        for (int i = 0; i < filters.Length; ++i) {
+            InternalOccupant occupant = filters [i] as InternalOccupant;
+            if (occupant != null && occupants.Contains (occupant.ID)) {
+                numOccupants--;
+            }
         }
 
         return (numOccupants > 0);
@@ -1067,6 +1070,7 @@ public class HexGridManager : MonoBehaviour
 
                 if( bucket.Count == 0 )
                 {
+                    bucket.Clear();
                     _manager._intListPool.ReturnObject( bucket );
                     _manager._occupantBuckets.Remove( sig );
                 }
