@@ -15,7 +15,7 @@ public class Hex : MonoBehaviour {
 		HexModel.GridSize = GridSize;
         hex.transform.parent = transform;
         hex.transform.localPosition = new Vector3(0, 0, 0);
-        hex.renderer.material = MaterialToUse;
+        hex.GetComponent<Renderer>().material = MaterialToUse;
     }
 
 	void Update () 
